@@ -177,16 +177,28 @@ RepoPilot AI generates:
 ## 📸 Screenshots
 
 ### Home Dashboard
-*Add screenshot here*
+<img width="1918" height="975" alt="image" src="https://github.com/user-attachments/assets/14c460f9-fda2-44f9-9548-9bd1a52c56e3" />
+
+
 
 ### Repository Analysis Output
-*Add screenshot here*
+<img width="1918" height="972" alt="image" src="https://github.com/user-attachments/assets/c22958c2-1f9f-4da7-b77c-b79de6966863" />
+
+### Repository Health and Tech Stack
+<img width="1918" height="927" alt="image" src="https://github.com/user-attachments/assets/0709c10d-b0dc-481d-b573-16b4f7c805f3" />
+
+
 
 ### Contribution Roadmap
-*Add screenshot here*
+<img width="1918" height="735" alt="image" src="https://github.com/user-attachments/assets/0acae91c-75d4-4379-ab8b-b6c16a508f48" />
+
+<img width="1918" height="587" alt="image" src="https://github.com/user-attachments/assets/61ab37b2-e4d2-49ec-93c4-bbd61e7eb674" />
+
 
 ### Maintainer Activity Visualization
-*Add screenshot here*
+<img width="1918" height="578" alt="image" src="https://github.com/user-attachments/assets/28ca9cc6-1884-4226-b99e-847aa03e9378" />
+
+
 
 ---
 
@@ -411,7 +423,7 @@ RepoPilot AI transforms confusing repositories into actionable contributor intel
 
 ## 👨‍💻 Team
 
-### Aman & Contributors
+### Aman 
 Built for the **Microsoft AI Skills Fest Hackathon 2026**
 
 ---
