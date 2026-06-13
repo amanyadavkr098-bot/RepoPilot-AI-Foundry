@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RepoPilot AI — Repository Intelligence Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="scanline" id="scanline"></div>
+
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">RP</span>
+        RepoPilot <span class="brand-tag">// AI repo intelligence</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#how-it-works">how it works</a>
+        <a href="https://github.com/amanyadavkr098-bot/RepoPilot-AI" target="_blank" rel="noopener">source</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-eyebrow">// onboarding assistant for open source</div>
+      <h1 class="hero-title">Know a repo<br/>before you <span class="accent">commit</span>.</h1>
+      <p class="hero-sub">
+        Paste any public GitHub repository and RepoPilot reads the README, maps the
+        folder structure, scores maintainer health, and hands you a beginner-ready
+        contribution path — all in one pass.
+      </p>
+
+      <div class="prompt-box">
+        <div class="prompt-bar">
+          <span class="prompt-dot r"></span>
+          <span class="prompt-dot y"></span>
+          <span class="prompt-dot g"></span>
+          <span class="prompt-bar-label">repopilot — analyze</span>
+        </div>
+        <div class="prompt-input-row">
+          <span class="prompt-prefix">repopilot&gt;</span>
+          <input
+            id="repo-input"
+            type="text"
+            placeholder="analyze https://github.com/owner/repo"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="btn-analyze" id="analyze-btn">Run scan</button>
+        </div>
+      </div>
+      <div class="prompt-hint">
+        try
+        <button class="example" data-repo="https://github.com/facebook/react">facebook/react</button>,
+        <button class="example" data-repo="https://github.com/expressjs/express">expressjs/express</button>,
+        or
+        <button class="example" data-repo="https://github.com/amanyadavkr098-bot/RepoPilot-AI">this repo</button>
+      </div>
+      <div class="status-line" id="status-line"></div>
+    </section>
+
+    <section id="results">
+      <div class="repo-banner" id="repo-banner"></div>
+
+      <!-- Dashboard metrics -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">01</span>
+          <span class="section-title">Overview</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="stat-grid" id="dashboard-stats"></div>
+      </div>
+
+
+      <!-- Foundry IQ Reasoning Trace -->
+      <div class="section" id="reasoning-section" style="display:none">
+        <div class="section-head">
+          <span class="section-eyebrow">IQ</span>
+          <span class="section-title">Foundry IQ reasoning trace</span>
+          <span class="section-line"></span>
+        </div>
+        <div id="reasoning-trace"></div>
+      </div>
+
+      <!-- Repository summary -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">02</span>
+          <span class="section-title">Repository summary</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="panel markdown" id="repo-summary"></div>
+      </div>
+
+      <!-- Health metrics -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">03</span>
+          <span class="section-title">Repository health</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="health-grid" id="health-grid"></div>
+      </div>
+
+      <!-- Tech stack -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">04</span>
+          <span class="section-title">Technology stack</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="panel" id="tech-stack"></div>
+      </div>
+
+      <!-- Beginner guide -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">05</span>
+          <span class="section-title">Beginner contribution guide</span>
+          <span class="section-line"></span>
+        </div>
+        <div id="beginner-guide"></div>
+      </div>
+
+      <!-- Folder structure -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">06</span>
+          <span class="section-title">Folder structure</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="panel folder-explanation" id="folder-explanation"></div>
+      </div>
+
+      <!-- Contribution path -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">07</span>
+          <span class="section-title">Contribution path</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="panel markdown" id="contribution-path"></div>
+      </div>
+
+      <!-- Activity heatmap -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-eyebrow">08</span>
+          <span class="section-title">Maintainer activity heatmap</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="panel" id="heatmap-panel"></div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section" style="margin-top: 40px;">
+      <div class="section-head">
+        <span class="section-eyebrow">about</span>
+        <span class="section-title">How RepoPilot reads a repo</span>
+        <span class="section-line"></span>
+      </div>
+      <div class="panel markdown">
+        <p>RepoPilot pulls live data from the GitHub API — README, languages,
+        contributors, issues, and comment activity — then layers an AI pass on top
+        to translate raw signals into plain-language guidance: what the project does,
+        which folders matter, where a first-time contributor should start, and when
+        maintainers are most likely to respond.</p>
+        <p>Health metrics (bus factor, issue closing time, responsiveness, staleness)
+        are computed directly from repository activity, so the score reflects how
+        the project is actually run — not just how it's described.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    RepoPilot AI — built on the GitHub REST API · for educational and onboarding use
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
