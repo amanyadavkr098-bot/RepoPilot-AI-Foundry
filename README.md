@@ -1,4 +1,7 @@
-
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![Azure AI Foundry](https://img.shields.io/badge/Azure-AI%20Foundry-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 # RepoPilot AI 🚀  
 ### AI-Powered Open Source Intelligence for Contributors
 
