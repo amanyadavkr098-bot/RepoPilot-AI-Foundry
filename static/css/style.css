@@ -1837,3 +1837,205 @@ a:hover { text-decoration: underline; }
 /* Overrides: remove floating UI and make dashboard full-width */
 .health-floating-rec, .health-side-note { display: none !important; }
 .health-dashboard { width: 100% !important; max-width: none !important; }
+/* ─────────────────────────────────────────────────────────────────────────────
+   folderTree.css  —  RepoPilot AI Foundry
+   Paste this block into your static/css/style.css
+   ─────────────────────────────────────────────────────────────────────────────*/
+
+/* ── Container ────────────────────────────────────────────────────────────── */
+#folder-explanation {
+  font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0.25rem 0;
+}
+
+/* ── Node wrapper ─────────────────────────────────────────────────────────── */
+.ftn-node {
+  display: block;
+}
+
+/* ── Row (one file/dir line) ──────────────────────────────────────────────── */
+.ftn-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 3px 8px 3px 4px;
+  border-radius: 6px;
+  cursor: default;
+  transition: background 0.12s ease;
+  outline: none;
+}
+.ftn-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.ftn-clickable {
+  cursor: pointer;
+}
+.ftn-row:focus-visible {
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+}
+
+/* ── Indent pipes (vertical connection lines) ─────────────────────────────── */
+.ftn-pipe {
+  display: inline-block;
+  width: 20px;
+  flex-shrink: 0;
+  position: relative;
+  align-self: stretch;
+}
+.ftn-pipe::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* ── Horizontal connector (├── / └──) ────────────────────────────────────── */
+.ftn-connector {
+  display: inline-block;
+  width: 20px;
+  flex-shrink: 0;
+  position: relative;
+  align-self: stretch;
+}
+.ftn-connector::before {
+  /* horizontal arm */
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 14px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.ftn-connector::after {
+  /* vertical arm going up */
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.10);
+}
+.ftn-connector.ftn-last::after {
+  /* last child: vertical arm stops at mid-row, not full height */
+  bottom: auto;
+  height: 14px;
+}
+
+/* ── Toggle chevron ───────────────────────────────────────────────────────── */
+.ftn-toggle {
+  width: 14px;
+  flex-shrink: 0;
+  margin-top: 5px;
+  margin-right: 5px;
+  font-size: 10px;
+  color: #8b9cb0;
+  user-select: none;
+  font-family: sans-serif;
+}
+
+/* ── Icon ─────────────────────────────────────────────────────────────────── */
+.ftn-icon {
+  width: 20px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  margin-right: 6px;
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+}
+
+/* ── Label area ───────────────────────────────────────────────────────────── */
+.ftn-label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  padding: 3px 0;
+  min-width: 0;
+}
+
+/* ── File / dir name ──────────────────────────────────────────────────────── */
+.ftn-name {
+  font-weight: 500;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+.ftn-name.ftn-dir {
+  color: #60a5fa;        /* blue for directories */
+}
+.ftn-name.ftn-hidden {
+  color: #8b9cb0;        /* muted for dotfiles */
+}
+
+/* ── Description text ─────────────────────────────────────────────────────── */
+.ftn-desc {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 11.5px;
+  color: #8b9cb0;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* ── Children collapse animation ──────────────────────────────────────────── */
+.ftn-children {
+  overflow: hidden;
+  max-height: 4000px;
+  transition: max-height 0.22s ease;
+}
+.ftn-children.ftn-collapsed {
+  max-height: 0 !important;
+}
+
+/* ── Badges ───────────────────────────────────────────────────────────────── */
+.ftn-badge {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.ftn-badge-entry  { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+.ftn-badge-config { background: rgba(251, 191, 36,  0.15); color: #fbbf24; }
+.ftn-badge-core   { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+.ftn-badge-ai     { background: rgba(251, 113, 133, 0.15); color: #fb7185; }
+.ftn-badge-docs   { background: rgba(96,  165, 250, 0.15); color: #60a5fa; }
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.ftn-empty {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #8b9cb0;
+  padding: 0.5rem 0;
+}
+
+/* Give the tree breathing room inside the .panel wrapper */
+.folder-panel {
+  padding: 20px 24px;
+}
+
+/* Folder panel header — item count label */
+.ftn-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ftn-header-label {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b9cb0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

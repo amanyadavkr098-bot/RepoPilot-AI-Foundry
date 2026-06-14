@@ -5,6 +5,8 @@ Uses azure-ai-projects v2.2.0 + DefaultAzureCredential (az login).
 """
 
 import os
+import re
+import json
 import time
 import tempfile
 from typing import Optional
@@ -125,6 +127,55 @@ def _call_with_file_search(
                                 citations.append(str(ann.file_citation))
 
     return text.strip(), list(set(citations))
+
+
+def _parse_folder_json(raw: str, folders: list) -> list[dict]:
+    """
+    Parse the AI's JSON response for folder structure into a tree-view list.
+    Falls back to a minimal structure built from the raw folder list.
+
+    Expected AI output (array of objects):
+    [
+      { "name": "src", "description": "Main source files", "type": "folder" },
+      ...
+    ]
+
+    Returned shape consumed by the frontend tree-view:
+    [
+      { "name": "src", "description": "Main source files", "type": "folder", "children": [] },
+      ...
+    ]
+    """
+    # Strip markdown fences if the model wrapped the JSON
+    cleaned = re.sub(r"```(?:json)?|```", "", raw).strip()
+
+    # Try to find a JSON array anywhere in the response
+    match = re.search(r"\[.*\]", cleaned, re.DOTALL)
+    if match:
+        try:
+            nodes = json.loads(match.group())
+            # Normalise and guarantee required keys
+            tree = []
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                tree.append({
+                    "name":        str(node.get("name", "unknown")),
+                    "description": str(node.get("description", "")),
+                    "type":        str(node.get("type", "folder")),
+                    "children":    node.get("children", []),
+                })
+            if tree:
+                return tree
+        except json.JSONDecodeError:
+            pass
+
+    # ── Fallback: build a minimal tree from the raw folder list ──────
+    print("[Foundry] folder JSON parse failed — building fallback tree")
+    return [
+        {"name": f, "description": "", "type": "folder", "children": []}
+        for f in folders
+    ]
 
 
 def analyze_repo_with_foundry(
@@ -254,31 +305,60 @@ Use the file search tool. Max 150 words. Bullet points only."""
     except Exception as e:
         roadmap = f"Roadmap unavailable: {e}"
 
-    # ── Step 5: Folder Explanation ───────────────────────────────────
+    # ── Step 5: Folder Structure as JSON (tree-view) ─────────────────
     trace.append({
         "step": 5,
         "title": "Explaining folder structure",
         "detail": f"Foundry IQ retrieving folder context from {len(folders)} directories"
     })
 
-    folder_explanation = ""
-    folder_citations = []
+    folder_tree: list[dict] = []
+    folder_citations: list[str] = []
+    folder_explanation: str = ""          # kept for backwards-compat / plain-text fallback
+
     try:
-        folder_explanation, folder_citations = _call_with_file_search(
+        raw_folder_response, folder_citations = _call_with_file_search(
             openai_client, vector_store_id, system_prompt,
-            f"""For the {owner}/{repo} repository, explain each folder's purpose briefly.
-Format: folder_name → what it contains and why a contributor cares about it
-Only cover the key folders: {", ".join(folders[:12])}
-Keep each line under 15 words. Use the file search tool."""
+            f"""For the {owner}/{repo} repository, return ONLY a valid JSON array describing each folder.
+No prose, no markdown fences — raw JSON only.
+
+Each element must follow this exact shape:
+{{
+  "name": "<folder name>",
+  "description": "<one short sentence: what it contains and why a contributor cares>",
+  "type": "folder"
+}}
+
+Folders to cover: {json.dumps(folders[:12])}
+
+Use the file search tool to ground your descriptions. Return the JSON array only."""
         )
+
+        folder_tree = _parse_folder_json(raw_folder_response, folders)
+
+        # Also build a plain-text version for any UI that still uses it
+        folder_explanation = "\n".join(
+            f"• {node['name']} → {node['description']}" for node in folder_tree
+        )
+
     except Exception as e:
+        # Hard fallback — build a tree from the raw list
+        print(f"[Foundry] Folder step failed: {e}")
+        folder_tree = [
+            {"name": f, "description": "", "type": "folder", "children": []}
+            for f in folders
+        ]
         folder_explanation = "\n".join(f"• {f}" for f in folders)
 
     # ── Step 6: Cleanup ──────────────────────────────────────────────
     trace.append({
         "step": 6,
         "title": "Synthesis complete",
-        "detail": f"Generated grounded summary + roadmap + folder map with {len(set(summary_citations + roadmap_citations + folder_citations))} source citations"
+        "detail": (
+            f"Generated grounded summary + roadmap + folder map "
+            f"({len(folder_tree)} nodes) with "
+            f"{len(set(summary_citations + roadmap_citations + folder_citations))} source citations"
+        )
     })
 
     try:
@@ -292,6 +372,9 @@ Keep each line under 15 words. Use the file search tool."""
         "success": True,
         "summary": summary or _fallback_summary(owner, repo, folders, tech_stack),
         "contribution_guide": roadmap or "See beginner guide section above.",
+        # ── NEW: structured tree for the frontend tree-view component ──
+        "folder_tree": folder_tree,
+        # ── KEPT: plain-text for any UI still using folder_explanation ─
         "folder_explanation": folder_explanation or "\n".join(f"• {f}" for f in folders),
         "citations": all_citations,
         "reasoning_trace": trace,
@@ -315,10 +398,15 @@ def _fallback_summary(owner, repo, folders, tech_stack):
 def _fallback(owner, repo, readme, folders, tech_stack, reason):
     """Return a graceful fallback when Foundry is unavailable."""
     print(f"[Foundry] Falling back: {reason}")
+    fallback_tree = [
+        {"name": f, "description": "", "type": "folder", "children": []}
+        for f in folders
+    ]
     return {
         "success": False,
         "summary": _fallback_summary(owner, repo, folders, tech_stack),
         "contribution_guide": "Foundry IQ unavailable — see beginner guide section.",
+        "folder_tree": fallback_tree,
         "folder_explanation": "\n".join(f"• {f}" for f in folders),
         "citations": [],
         "reasoning_trace": [{"step": 1, "title": "Foundry IQ unavailable", "detail": reason}],

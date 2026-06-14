@@ -68,7 +68,8 @@ function renderResults(data) {
   renderHealth(data.health_metrics, data.contributors_count, data.open_issues_count);
   renderTechStack(data.tech_stack);
   renderBeginnerGuide(data.beginner_guide);
-  renderFolders(data.folder_explanation);
+  // ── FIX: pass folder_tree (structured JSON) + folder_explanation (plain-text fallback) ──
+  renderFolders(data.folder_tree, data.folder_explanation);
   renderContributionPath(data.contribution_guide);
   renderHeatmap(data.activity_heatmap);
 }
@@ -115,66 +116,25 @@ function renderSummary(summaryMarkdown) {
 function renderHealth(m, contributorsCount, openIssuesCount) {
   const el = document.getElementById('health-grid');
 
-  // Calculate health scores
   const healthScore = Math.round((m.overall_health.score || 0) + (Math.min(m.maintainer_responsiveness.score || 0, 50)) / 2);
   const confidence = Math.min(98, Math.max(72, Math.round((healthScore + m.maintainer_responsiveness.score) / 2)));
 
   const riskClass = m.bus_factor.risk_level.toLowerCase().includes('high') ? 'high' : m.bus_factor.risk_level.toLowerCase().includes('low') ? 'low' : 'medium';
   const responseClass = m.maintainer_responsiveness.score >= 70 ? 'low' : m.maintainer_responsiveness.score >= 45 ? 'medium' : 'high';
 
-  // Cards organized by visual hierarchy
   const largeCards = [
-    {
-      label: 'Overall health',
-      value: `${m.overall_health.score}/100`,
-      sub: `${m.overall_health.status}`,
-      emoji: m.overall_health.emoji,
-      size: 'large'
-    },
-    {
-      label: 'Composite score',
-      value: `${healthScore}%`,
-      sub: 'Health index',
-      emoji: '📈',
-      size: 'large'
-    }
+    { label: 'Overall health', value: `${m.overall_health.score}/100`, sub: `${m.overall_health.status}`, emoji: m.overall_health.emoji, size: 'large' },
+    { label: 'Composite score', value: `${healthScore}%`, sub: 'Health index', emoji: '📈', size: 'large' }
   ];
 
   const mediumCards = [
-    {
-      label: 'Maintainer response',
-      value: `${m.maintainer_responsiveness.score}/100`,
-      sub: m.maintainer_responsiveness.rating,
-      emoji: m.maintainer_responsiveness.score >= 70 ? '⚡' : '⏱️',
-      chip: `response-${responseClass}`,
-      size: 'medium'
-    },
-    {
-      label: 'Issue closing time',
-      value: `${m.issue_closing.avg_days}d`,
-      sub: `${m.issue_closing.rating}`,
-      emoji: '🗓️',
-      chip: `response-${responseClass}`,
-      size: 'medium'
-    }
+    { label: 'Maintainer response', value: `${m.maintainer_responsiveness.score}/100`, sub: m.maintainer_responsiveness.rating, emoji: m.maintainer_responsiveness.score >= 70 ? '⚡' : '⏱️', chip: `response-${responseClass}`, size: 'medium' },
+    { label: 'Issue closing time', value: `${m.issue_closing.avg_days}d`, sub: `${m.issue_closing.rating}`, emoji: '🗓️', chip: `response-${responseClass}`, size: 'medium' }
   ];
 
   const smallCards = [
-    {
-      label: 'Bus factor risk',
-      value: m.bus_factor.risk_level,
-      sub: `${m.bus_factor.top_contributor_share}% top`,
-      emoji: '👤',
-      chip: `status-${riskClass}`,
-      size: 'small'
-    },
-    {
-      label: 'Contributors',
-      value: contributorsCount !== null ? contributorsCount : '?',
-      sub: 'tracked',
-      emoji: '👥',
-      size: 'small'
-    }
+    { label: 'Bus factor risk', value: m.bus_factor.risk_level, sub: `${m.bus_factor.top_contributor_share}% top`, emoji: '👤', chip: `status-${riskClass}`, size: 'small' },
+    { label: 'Contributors', value: contributorsCount !== null ? contributorsCount : '?', sub: 'tracked', emoji: '👥', size: 'small' }
   ];
 
   const actionList = m.maintainer_responsiveness.score < 70
@@ -185,7 +145,6 @@ function renderHealth(m, contributorsCount, openIssuesCount) {
     ? 'This repository is beginner-friendly but maintainers respond slowly.'
     : 'Maintainers are generally responsive — this repo is a good first contribution target.';
 
-  // Render dashboard section
   let dashboardHtml = `
     <div class="health-dashboard">
       <div class="health-header">
@@ -197,7 +156,6 @@ function renderHealth(m, contributorsCount, openIssuesCount) {
       <div class="health-metrics-compact">
   `;
 
-  // Render large cards (hero)
   for (let card of largeCards) {
     const valueStr = String(card.value);
     dashboardHtml += `
@@ -210,13 +168,10 @@ function renderHealth(m, contributorsCount, openIssuesCount) {
     `;
   }
 
-  // Render medium cards
   for (let card of mediumCards) {
     const valueStr = String(card.value);
     let valueHtml = escapeHtml(valueStr);
-    if (card.chip) {
-      valueHtml = `<span class="status-chip ${card.chip}">${escapeHtml(valueStr)}</span>`;
-    }
+    if (card.chip) valueHtml = `<span class="status-chip ${card.chip}">${escapeHtml(valueStr)}</span>`;
     dashboardHtml += `
       <div class="health-metric">
         <div class="health-metric-label">${escapeHtml(card.label)}</div>
@@ -227,13 +182,10 @@ function renderHealth(m, contributorsCount, openIssuesCount) {
     `;
   }
 
-  // Render small cards
   for (let card of smallCards) {
     const valueStr = String(card.value);
     let valueHtml = escapeHtml(valueStr);
-    if (card.chip) {
-      valueHtml = `<span class="status-chip ${card.chip}">${escapeHtml(valueStr)}</span>`;
-    }
+    if (card.chip) valueHtml = `<span class="status-chip ${card.chip}">${escapeHtml(valueStr)}</span>`;
     dashboardHtml += `
       <div class="health-metric">
         <div class="health-metric-label">${escapeHtml(card.label)}</div>
@@ -243,38 +195,25 @@ function renderHealth(m, contributorsCount, openIssuesCount) {
     `;
   }
 
-  dashboardHtml += `
-      </div>
-    </div>
-  `;
+  dashboardHtml += `</div></div>`;
 
-  // Render right sidebar with advisor and analytics
   const sidebarHtml = `
     <div class="health-sidebar">
       <div class="ai-insight-panel">
         <div class="ai-insight-badge">🚀 ${m.maintainer_responsiveness.score < 70 ? 'Beginner-friendly' : 'Responsive Repo'}</div>
         <h3>🤖 AI Contribution Advisor</h3>
         <p class="ai-insight-summary">${escapeHtml(insightTitle)}</p>
-        
         <div>
           <div class="ai-insight-section-label">Suggested Actions</div>
           <ul class="ai-insight-list">
             ${actionList.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
           </ul>
         </div>
-
         <div class="ai-insight-footer">
-          <div>
-            <span class="label">Expected Review</span>
-            <strong>≈ ${escapeHtml(String(m.issue_closing.avg_days))} days</strong>
-          </div>
-          <div>
-            <span class="label">Confidence</span>
-            <strong>${confidence}%</strong>
-          </div>
+          <div><span class="label">Expected Review</span><strong>≈ ${escapeHtml(String(m.issue_closing.avg_days))} days</strong></div>
+          <div><span class="label">Confidence</span><strong>${confidence}%</strong></div>
         </div>
       </div>
-
       <div class="analytics-mini-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
@@ -294,7 +233,7 @@ function renderHealth(m, contributorsCount, openIssuesCount) {
               <stop offset="100%" style="stop-color:#62f5a6" />
             </linearGradient>
           </defs>
-          <polyline points="0,45 14,38 28,42 42,35 56,28 70,32 84,25 98,18 112,22 126,15 140,12 154,18 168,14 182,8 196,12 210,20 224,15 238,10 252,6 266,8 280,12" 
+          <polyline points="0,45 14,38 28,42 42,35 56,28 70,32 84,25 98,18 112,22 126,15 140,12 154,18 168,14 182,8 196,12 210,20 224,15 238,10 252,6 266,8 280,12"
                     fill="url(#chartGradient)" stroke="url(#lineGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <div class="analytics-stat">
@@ -331,9 +270,7 @@ function renderBeginnerGuide(guide) {
   const el = document.getElementById('beginner-guide');
   let html = '';
 
-  // Add AI Insights section
   html += '<div class="insights-grid">';
-  
   html += `
     <div class="insight-card success">
       <div class="insight-icon">🧠</div>
@@ -341,18 +278,12 @@ function renderBeginnerGuide(guide) {
       <div class="insight-title">Best Starting Point</div>
       <div class="insight-content">Most beginner contributors start with <strong>documentation</strong> or <strong>tests</strong>. Look for <code>good first issue</code> labels.</div>
     </div>
-  `;
-
-  html += `
     <div class="insight-card warning">
       <div class="insight-icon">⚠️</div>
       <div class="insight-label">Warning</div>
       <div class="insight-title">Avoid Complex Areas</div>
       <div class="insight-content">Deep internal modules often have high complexity. Start with <strong>helpers</strong> or <strong>utilities</strong> instead.</div>
     </div>
-  `;
-
-  html += `
     <div class="insight-card success">
       <div class="insight-icon">🚀</div>
       <div class="insight-label">Fastest Path</div>
@@ -360,10 +291,8 @@ function renderBeginnerGuide(guide) {
       <div class="insight-content">Type fixes, docs, and tests are <strong>easiest wins</strong>. Build confidence before tackling feature code.</div>
     </div>
   `;
-
   html += '</div>';
 
-  // Beginner areas with enhanced cards
   if (guide.areas && guide.areas.length > 0) {
     html += '<div style="display: grid; gap: 12px; margin-bottom: 20px;">';
     html += guide.areas.map(area => `
@@ -381,7 +310,6 @@ function renderBeginnerGuide(guide) {
     html += `<div class="panel" style="padding: 20px; margin-bottom: 20px;"><p style="color: var(--text-dim);">No specific beginner contribution areas detected for this stack.</p></div>`;
   }
 
-  // Beginner-friendly issues
   const issues = guide.beginner_issues.length > 0 ? guide.beginner_issues : guide.fallback_issues;
   const issueLabel = guide.beginner_issues.length > 0
     ? '✅ Beginner-friendly open issues'
@@ -406,168 +334,341 @@ function renderBeginnerGuide(guide) {
   el.innerHTML = html;
 }
 
-function renderFolders(text) {
-  const el = document.getElementById('folder-explanation');
-  
-  const lines = (text || '').split('\n').filter(l => l.trim());
-  if (lines.length === 0) {
-    el.textContent = 'No folder information available.';
-    return;
+// ------------------------------------------------------------
+// Folder Tree — interactive collapsible tree view
+// ------------------------------------------------------------
+
+// File-type → emoji icon + color
+const FT_ICONS = {
+  '.py':   { icon: '🐍', color: '#3776AB' },
+  '.html': { icon: '🌐', color: '#E44D26' },
+  '.css':  { icon: '🎨', color: '#264de4' },
+  '.js':   { icon: '⚡', color: '#d4b800' },
+  '.ts':   { icon: '🔷', color: '#3178c6' },
+  '.jsx':  { icon: '⚛️',  color: '#61DAFB' },
+  '.tsx':  { icon: '⚛️',  color: '#61DAFB' },
+  '.json': { icon: '📋', color: '#cbcb41' },
+  '.yaml': { icon: '📋', color: '#cb7e32' },
+  '.yml':  { icon: '📋', color: '#cb7e32' },
+  '.toml': { icon: '📋', color: '#9c4221' },
+  '.env':  { icon: '🔑', color: '#ecc94b' },
+  '.txt':  { icon: '📄', color: '#8b9cb0' },
+  '.md':   { icon: '📝', color: '#8b9cb0' },
+  '.rst':  { icon: '📝', color: '#8b9cb0' },
+  '.lock': { icon: '🔒', color: '#8b9cb0' },
+  'dockerfile':     { icon: '🐳', color: '#2496ED' },
+  '.dockerignore':  { icon: '🐳', color: '#2496ED' },
+  '.gitignore':     { icon: '⚙️',  color: '#8b9cb0' },
+  '.gitattributes': { icon: '⚙️',  color: '#8b9cb0' },
+};
+
+// Badge rules — matched against filename
+const FT_BADGES = [
+  { test: /^main\.py$/i,                badge: 'entry',  label: 'entry point' },
+  { test: /^app\.py$/i,                 badge: 'entry',  label: 'entry point' },
+  { test: /^index\.html$/i,             badge: 'entry',  label: 'entry point' },
+  { test: /foundry|llm|ai_|explainer/i, badge: 'ai',     label: 'AI'          },
+  { test: /analyzer|fetcher|metrics/i,  badge: 'core',   label: 'core'        },
+  { test: /requirements|\.env|config/i, badge: 'config', label: 'config'      },
+  { test: /readme/i,                    badge: 'docs',   label: 'docs'        },
+];
+
+function ftGetIcon(name) {
+  const lower = name.toLowerCase();
+  if (FT_ICONS[lower]) return FT_ICONS[lower];
+  const dot = lower.lastIndexOf('.');
+  if (dot !== -1) {
+    const ext = lower.slice(dot);
+    if (FT_ICONS[ext]) return FT_ICONS[ext];
   }
-
-  const folderPattern = /^[\s-]*([^:\n]+):\s*(.+?)(?:\s*\[(.+?)\])?$/;
-  let cardsHtml = '';
-  let folderCount = 0;
-
-  for (let line of lines) {
-    const match = line.match(folderPattern);
-    if (match && folderCount < 8) {
-      const [, folderName, description, difficulty] = match;
-      const name = folderName.trim().replace(/^[•\-*]\s*/, '');
-      const desc = description.trim();
-      const diff = difficulty ? difficulty.trim().toLowerCase() : 'medium';
-
-      const icons = {
-        'packages': '📦', 'fixtures': '🧪', 'compiler': '⚙️',
-        'scripts': '🔧', 'github': '🔗', 'tests': '✅',
-        'src': '📝', 'config': '⚙️', 'docs': '📚', 'utils': '🛠️'
-      };
-      const icon = Object.entries(icons).find(([key]) => name.toLowerCase().includes(key))?.[1] || '📁';
-      const difficultyClass = diff.includes('easy') || diff.includes('beginner') ? 'easy' :
-                              diff.includes('hard') || diff.includes('advanced') ? 'hard' : 'medium';
-      const difficultyLabel = difficultyClass === 'easy' ? '🟢 Easy' :
-                              difficultyClass === 'hard' ? '🔴 Hard' : '🟡 Medium';
-      const importance = name.toLowerCase().includes('package') || name.toLowerCase().includes('src') ? 'important' : '';
-      const subtitle = desc.length > 64 ? desc.slice(0, 64).replace(/\s+\S*$/, '…') : desc;
-
-      cardsHtml += `
-        <div class="folder-card" title="${escapeAttr(desc)}">
-          <div class="folder-card-header">
-            <div class="folder-icon">${icon}</div>
-            <div>
-              <div class="folder-name">${escapeHtml(name)}</div>
-              <div class="folder-card-subtitle">${escapeHtml(subtitle)}</div>
-            </div>
-          </div>
-          <div class="folder-description">${escapeHtml(desc)}</div>
-          <div class="folder-badge-row">
-            <span class="folder-badge ${difficultyClass}">${difficultyLabel}</span>
-            ${importance ? `<span class="folder-badge important">⭐ Key</span>` : ''}
-          </div>
-        </div>
-      `;
-      folderCount++;
-    }
-  }
-
-  if (!cardsHtml) {
-    el.innerHTML = `
-      <div class="folder-tree">
-        <p style="color: var(--text-dim);">Folder preview could not be parsed. Showing the full outline below.</p>
-      </div>
-      <div class="folder-details-raw">
-        <pre>${escapeHtml(text)}</pre>
-      </div>
-    `;
-    return;
-  }
-
-  el.innerHTML = `
-    <div class="folder-tree">
-      <div class="folder-tree-header">
-        <span class="folder-count-badge">📂 ${folderCount} folders highlighted</span>
-        <div class="tree-path"><span>📁 repo</span><span class="separator">/</span></div>
-      </div>
-      <div class="folder-cards-grid">
-        ${cardsHtml}
-      </div>
-    </div>
-    <div class="folder-details-raw">
-      <pre>${escapeHtml(text)}</pre>
-    </div>
-  `;
+  return { icon: '📄', color: '#8b9cb0' };
 }
 
-function renderContributionPath(markdown) {
-  const el = document.getElementById('contribution-path');
-  
-  // Parse markdown into steps
-  const lines = (markdown || '').split('\n').filter(l => l.trim());
-  const steps = [];
-  
-  for (let line of lines) {
-    const trimmed = line.trim();
-    // Match numbered lists, bullet points, or lines with arrows
-    const match = trimmed.match(/^(?:\d+\.\s*|[-*]\s*)?(.+?)(?:\s*→|\s*↓)?$/);
-    if (match && match[1].trim()) {
-      steps.push(match[1].trim());
-    }
+function ftGetBadge(name) {
+  for (const rule of FT_BADGES) {
+    if (rule.test.test(name)) return rule;
+  }
+  return null;
+}
+
+// Parse { "path/to/file": "desc" } into a nested tree
+function ftParseFlatToTree(flatObj) {
+  const root = { name: 'root', type: 'dir', children: [], desc: '' };
+  for (const [rawKey, desc] of Object.entries(flatObj)) {
+    const parts = rawKey.replace(/^\//, '').split(/[/\\]/).filter(Boolean);
+    let cursor = root;
+    parts.forEach((part, idx) => {
+      const isLast = idx === parts.length - 1;
+      const isDir  = !isLast || rawKey.endsWith('/') || rawKey.endsWith('\\');
+      let child = cursor.children.find(c => c.name === part);
+      if (!child) {
+        child = { name: part, type: isDir ? 'dir' : 'file', desc: isLast ? (desc || '') : '', children: isDir ? [] : undefined, open: false };
+        cursor.children.push(child);
+      } else if (isLast) {
+        child.desc = desc || child.desc;
+      }
+      cursor = child;
+    });
+  }
+  return root;
+}
+
+// Sort: dirs first, then files, both alphabetically
+function ftSort(node) {
+  if (!node.children) return;
+  node.children.sort((a, b) => {
+    if (a.type === b.type) return a.name.localeCompare(b.name);
+    return a.type === 'dir' ? -1 : 1;
+  });
+  node.children.forEach(ftSort);
+}
+
+let _ftId = 0;
+
+// Build a single tree row + its children recursively
+function ftBuildNode(node, depth, isLast) {
+  const id      = 'ft-' + (_ftId++);
+  const isDir   = node.type === 'dir';
+  const hasKids = isDir && node.children && node.children.length > 0;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ftn-node';
+
+  const row = document.createElement('div');
+  row.className = 'ftn-row' + (hasKids ? ' ftn-clickable' : '');
+  if (hasKids) {
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-expanded', 'false');
   }
 
-  // Generate roadmap HTML
+  // Indent
+  const indent = document.createElement('div');
+  indent.style.cssText = 'display:flex;flex-shrink:0;';
+  for (let i = 0; i < depth; i++) {
+    const pipe = document.createElement('span');
+    pipe.className = 'ftn-pipe';
+    indent.appendChild(pipe);
+  }
+  if (depth > 0) {
+    const conn = document.createElement('span');
+    conn.className = 'ftn-connector' + (isLast ? ' ftn-last' : '');
+    indent.appendChild(conn);
+  }
+  row.appendChild(indent);
+
+  // Toggle chevron
+  const tog = document.createElement('span');
+  tog.className = 'ftn-toggle';
+  tog.textContent = hasKids ? '▸' : '';
+  row.appendChild(tog);
+
+  // Icon
+  const ico = document.createElement('span');
+  ico.className = 'ftn-icon';
+  ico.setAttribute('aria-hidden', 'true');
+  if (isDir) {
+    ico.textContent = '📁';
+  } else {
+    const { icon, color } = ftGetIcon(node.name);
+    ico.textContent = icon;
+    ico.style.color = color;
+  }
+  row.appendChild(ico);
+
+  // Label
+  const lbl = document.createElement('div');
+  lbl.className = 'ftn-label';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'ftn-name' + (isDir ? ' ftn-dir' : '') + (node.name.startsWith('.') ? ' ftn-hidden' : '');
+  nameEl.textContent = node.name;
+  lbl.appendChild(nameEl);
+
+  const badgeRule = ftGetBadge(node.name);
+  if (badgeRule) {
+    const badge = document.createElement('span');
+    badge.className = 'ftn-badge ftn-badge-' + badgeRule.badge;
+    badge.textContent = badgeRule.label;
+    lbl.appendChild(badge);
+  }
+
+  if (node.desc) {
+    const desc = document.createElement('span');
+    desc.className = 'ftn-desc';
+    desc.textContent = '— ' + node.desc;
+    lbl.appendChild(desc);
+  }
+
+  row.appendChild(lbl);
+  wrapper.appendChild(row);
+
+  // Children
+  if (hasKids) {
+    const kids = document.createElement('div');
+    kids.className = 'ftn-children ftn-collapsed';
+    node.children.forEach((child, i) =>
+      kids.appendChild(ftBuildNode(child, depth + 1, i === node.children.length - 1)));
+    wrapper.appendChild(kids);
+
+    row.addEventListener('click', () => {
+      const open = kids.classList.contains('ftn-collapsed');
+      kids.classList.toggle('ftn-collapsed', !open);
+      tog.textContent = open ? '▾' : '▸';
+      ico.textContent  = open ? '📂' : '📁';
+      row.setAttribute('aria-expanded', String(open));
+    });
+    row.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); }
+    });
+  }
+
+  return wrapper;
+}
+
+// ── FIX: renderFolders now accepts folder_tree (array from backend) ──────────
+// and folder_explanation (plain-text fallback)
+function renderFolders(folderTree, folderExplanation) {
+  _ftId = 0;
+  const el = document.getElementById('folder-explanation');
+
+  // ── Guard ────────────────────────────────────────────────────────────────
+  if (!folderTree && !folderExplanation) {
+    el.innerHTML = '<p style="color:var(--text-dim)">No folder information available.</p>';
+    return;
+  }
+
+  // ── Fallback: no structured tree — show plain text ───────────────────────
+  if (!folderTree || (Array.isArray(folderTree) && folderTree.length === 0)) {
+    if (typeof folderExplanation === 'string' && folderExplanation.trim()) {
+      el.innerHTML = `
+        <div class="folder-tree">
+          <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:12px;">
+            ⚠️ Folder data came back as plain text. Update your backend prompt to return JSON for the tree view.
+          </p>
+          <pre style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim);white-space:pre-wrap;">${escapeHtml(folderExplanation)}</pre>
+        </div>`;
+    } else {
+      el.innerHTML = '<p style="color:var(--text-dim)">No folder information available.</p>';
+    }
+    return;
+  }
+
+  // ── If already a nested root object (e.g. { name, children[] }) ─────────
+  if (!Array.isArray(folderTree) && folderTree.name && Array.isArray(folderTree.children)) {
+    const root = folderTree;
+    ftSort(root);
+    el.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'ftn-header';
+    header.innerHTML = `<span class="ftn-header-label">📂 ${root.children.length} items</span>`;
+    el.appendChild(header);
+    const tree = document.createElement('div');
+    tree.className = 'ftn-root';
+    root.children.forEach((child, i) =>
+      tree.appendChild(ftBuildNode(child, 0, i === root.children.length - 1)));
+    el.appendChild(tree);
+    return;
+  }
+
+  // ── Main path: backend returns Array<{ name, description, type, children? }>
+  // Convert to the flat { "name/": "desc" } object that ftParseFlatToTree expects
+  let flatObj = {};
+  if (Array.isArray(folderTree)) {
+    folderTree.forEach(node => {
+      const isDir = node.type === 'folder' || node.type === 'dir';
+      // trailing slash tells ftParseFlatToTree this is a directory
+      const key = isDir ? node.name + '/' : node.name;
+      flatObj[key] = node.description || '';
+
+      // one level of nested children if provided
+      if (Array.isArray(node.children)) {
+        node.children.forEach(child => {
+          const childIsDir = child.type === 'folder' || child.type === 'dir';
+          const childKey = node.name + '/' + child.name + (childIsDir ? '/' : '');
+          flatObj[childKey] = child.description || '';
+        });
+      }
+    });
+  } else {
+    // plain object passed directly — use as-is
+    flatObj = folderTree;
+  }
+
+  // ── Build tree + render ──────────────────────────────────────────────────
+  const root = ftParseFlatToTree(flatObj);
+  ftSort(root);
+
+  el.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'ftn-header';
+  header.innerHTML = `<span class="ftn-header-label">📂 ${root.children.length} items</span>`;
+  el.appendChild(header);
+
+  const tree = document.createElement('div');
+  tree.className = 'ftn-root';
+  root.children.forEach((child, i) =>
+    tree.appendChild(ftBuildNode(child, 0, i === root.children.length - 1)));
+  el.appendChild(tree);
+}
+
+// ------------------------------------------------------------
+// Contribution path
+// ------------------------------------------------------------
+function renderContributionPath(markdown) {
+  const el = document.getElementById('contribution-path');
+  const lines = (markdown || '').split('\n').filter(l => l.trim());
+  const steps = [];
+
+  for (let line of lines) {
+    const trimmed = line.trim();
+    const match = trimmed.match(/^(?:\d+\.\s*|[-*]\s*)?(.+?)(?:\s*→|\s*↓)?$/);
+    if (match && match[1].trim()) steps.push(match[1].trim());
+  }
+
   let html = `<div class="difficulty-section" style="margin-bottom: 24px;">
     <div class="difficulty-header">
       <div class="difficulty-label">🎯 Contribution Difficulty</div>
       <div class="difficulty-score-display">Medium</div>
     </div>
-    <div class="difficulty-bar">
-      <div class="difficulty-fill" style="width: 50%"></div>
-    </div>
+    <div class="difficulty-bar"><div class="difficulty-fill" style="width: 50%"></div></div>
     <div class="difficulty-categories">
-      <div class="difficulty-cat possible">
-        <div class="difficulty-cat-badge">✓</div>
-        <span>Beginner Possible</span>
-      </div>
-      <div class="difficulty-cat recommended">
-        <div class="difficulty-cat-badge">✓</div>
-        <span>Intermediate Recommended</span>
-      </div>
-      <div class="difficulty-cat advanced">
-        <div class="difficulty-cat-badge">✗</div>
-        <span>Advanced Only</span>
-      </div>
+      <div class="difficulty-cat possible"><div class="difficulty-cat-badge">✓</div><span>Beginner Possible</span></div>
+      <div class="difficulty-cat recommended"><div class="difficulty-cat-badge">✓</div><span>Intermediate Recommended</span></div>
+      <div class="difficulty-cat advanced"><div class="difficulty-cat-badge">✗</div><span>Advanced Only</span></div>
     </div>
   </div>`;
 
   html += '<div class="roadmap-timeline">';
-  
+
   if (steps.length > 0) {
     steps.forEach((step, idx) => {
-      // Parse step for action verbs and keywords
-      const isCompleted = idx < 2;  // First two are "done"
-      const stepNum = idx + 1;
-      
-      // Clean up step text
-      let cleanStep = step.replace(/^#+\s*/, '').replace(/^[-*]\s*/, '');
-      let title = cleanStep;
+      const isCompleted = idx < 2;
+      let title = step.replace(/^#+\s*/, '').replace(/^[-*]\s*/, '');
       let description = '';
-      
-      // Extract description if available
-      const parts = cleanStep.split(':');
-      if (parts.length > 1) {
-        title = parts[0].trim();
-        description = parts.slice(1).join(':').trim();
-      }
-      
+      const parts = title.split(':');
+      if (parts.length > 1) { title = parts[0].trim(); description = parts.slice(1).join(':').trim(); }
       html += `
         <div class="roadmap-step ${isCompleted ? 'done' : ''}">
-          <div class="roadmap-step-indicator">${stepNum}</div>
+          <div class="roadmap-step-indicator">${idx + 1}</div>
           <div class="roadmap-content">
             <div class="roadmap-title">${escapeHtml(title)}</div>
             ${description ? `<div class="roadmap-description">${escapeHtml(description)}</div>` : ''}
           </div>
-        </div>
-      `;
+        </div>`;
     });
   } else {
     html += '<div class="panel" style="padding: 20px;"><p style="color: var(--text-dim);">No contribution path available for this repository.</p></div>';
   }
-  
+
   html += '</div>';
-  
   el.innerHTML = html;
 }
 
+// ------------------------------------------------------------
+// Heatmap
+// ------------------------------------------------------------
 function renderHeatmap(heat) {
   const el = document.getElementById('heatmap-panel');
   const data = heat.data || [];
@@ -587,17 +688,12 @@ function renderHeatmap(heat) {
     let cls = 'activity-bar';
     if (d.activity > 0) cls += ' has-activity';
     if (isPeak) cls += ' peak';
-    return `
-      <div class="activity-bar-col">
-        <span class="activity-bar-count">${d.activity}</span>
-        <div class="${cls}" style="height:${heightPct}%"></div>
-      </div>`;
+    return `<div class="activity-bar-col"><span class="activity-bar-count">${d.activity}</span><div class="${cls}" style="height:${heightPct}%"></div></div>`;
   }).join('');
 
   const labels = data.map(d => {
     const hourNum = d.hour.replace(':00', '');
-    const isPeak = topHourSet.has(hourNum);
-    return `<div class="activity-label${isPeak ? ' peak' : ''}">${hourNum}</div>`;
+    return `<div class="activity-label${topHourSet.has(hourNum) ? ' peak' : ''}">${hourNum}</div>`;
   }).join('');
 
   const topHoursHtml = heat.top_hours.length > 0
@@ -611,7 +707,6 @@ function renderHeatmap(heat) {
   `;
 }
 
-
 // ------------------------------------------------------------
 // Foundry IQ Reasoning Trace
 // ------------------------------------------------------------
@@ -620,13 +715,9 @@ function renderTrace(data) {
   const el = document.getElementById('reasoning-trace');
   const trace = data.reasoning_trace || [];
 
-  if (!trace.length) {
-    section.style.display = 'none';
-    return;
-  }
+  if (!trace.length) { section.style.display = 'none'; return; }
 
   section.style.display = 'block';
-
   let html = '';
 
   if (data.foundry_powered) {
@@ -656,40 +747,24 @@ function renderTrace(data) {
 }
 
 // ------------------------------------------------------------
-// Tiny markdown renderer (headings, bold, lists, paragraphs)
+// Tiny markdown renderer
 // ------------------------------------------------------------
 function markdownToHtml(md) {
   if (!md) return '';
-
   const lines = md.split('\n');
   let html = '';
   let inList = false;
-
   for (let raw of lines) {
     const line = raw.trim();
-
-    if (line === '') {
-      if (inList) { html += '</ul>'; inList = false; }
-      continue;
-    }
-
-    if (line.startsWith('## ')) {
-      if (inList) { html += '</ul>'; inList = false; }
-      html += `<h2>${inlineMd(line.slice(3))}</h2>`;
-    } else if (line.startsWith('### ')) {
-      if (inList) { html += '</ul>'; inList = false; }
-      html += `<h3>${inlineMd(line.slice(4))}</h3>`;
-    } else if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
+    if (line === '') { if (inList) { html += '</ul>'; inList = false; } continue; }
+    if (line.startsWith('## ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h2>${inlineMd(line.slice(3))}</h2>`; }
+    else if (line.startsWith('### ')) { if (inList) { html += '</ul>'; inList = false; } html += `<h3>${inlineMd(line.slice(4))}</h3>`; }
+    else if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
       if (!inList) { html += '<ul>'; inList = true; }
-      const content = line.replace(/^(-|\*|\d+\.)\s/, '');
-      html += `<li>${inlineMd(content)}</li>`;
-    } else {
-      if (inList) { html += '</ul>'; inList = false; }
-      html += `<p>${inlineMd(line)}</p>`;
-    }
+      html += `<li>${inlineMd(line.replace(/^(-|\*|\d+\.)\s/, ''))}</li>`;
+    } else { if (inList) { html += '</ul>'; inList = false; } html += `<p>${inlineMd(line)}</p>`; }
   }
   if (inList) html += '</ul>';
-
   return html;
 }
 
@@ -702,10 +777,7 @@ function inlineMd(text) {
 }
 
 function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function escapeAttr(str) {

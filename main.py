@@ -130,7 +130,10 @@ def analyze(repo_url: str = Query(..., description="GitHub repository URL or own
     citations = foundry_result["citations"]
     foundry_powered = foundry_result["foundry_powered"]
 
-    # Folder explanation — from Foundry IQ (with fallback)
+    # ── FIX: pull BOTH keys from foundry_result ──────────────────────────────
+    # folder_tree  → structured JSON array for the interactive tree view
+    # folder_explanation → plain-text fallback (shown if tree is unavailable)
+    folder_tree = foundry_result.get("folder_tree", [])
     folder_explanation = foundry_result.get(
         "folder_explanation",
         "\n".join(f"• {folder}" for folder in folders)
@@ -196,7 +199,9 @@ def analyze(repo_url: str = Query(..., description="GitHub repository URL or own
             "beginner_issues": beginner_issues,
             "fallback_issues": fallback_issues,
         },
-        "folder_explanation": folder_explanation,
+        # ── FIX: both keys now included in the API response ──────────────────
+        "folder_tree": folder_tree,           # ← NEW: structured tree for the frontend
+        "folder_explanation": folder_explanation,  # ← KEPT: plain-text fallback
         "contribution_guide": contribution_guide,
         "activity_heatmap": {
             "data": heatmap_data,
