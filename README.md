@@ -177,26 +177,34 @@ RepoPilot AI generates:
 ## 📸 Screenshots
 
 ### Home Dashboard
-<img width="1918" height="975" alt="image" src="https://github.com/user-attachments/assets/14c460f9-fda2-44f9-9548-9bd1a52c56e3" />
+<img width="1918" height="975" alt="image" src="https://github.com/user-attachments/assets/75aafacd-db52-434a-ae93-d22512e44a1e" />
+
 
 
 
 ### Repository Analysis Output
-<img width="1918" height="972" alt="image" src="https://github.com/user-attachments/assets/c22958c2-1f9f-4da7-b77c-b79de6966863" />
+<img width="1915" height="367" alt="image" src="https://github.com/user-attachments/assets/942bef1a-164e-4e91-8da5-299fdce436c0" />
+<img width="1257" height="885" alt="image" src="https://github.com/user-attachments/assets/b58eb976-3c8c-4524-a2f5-1f3fa6d18b14" />
+
 
 ### Repository Health and Tech Stack
-<img width="1918" height="927" alt="image" src="https://github.com/user-attachments/assets/0709c10d-b0dc-481d-b573-16b4f7c805f3" />
+<img width="1595" height="958" alt="image" src="https://github.com/user-attachments/assets/e9be45e5-3ea7-4c89-9b50-33adf01013ba" />
+<img width="1917" height="485" alt="image" src="https://github.com/user-attachments/assets/d9be63d4-9124-4058-82b1-13ccb485bc33" />
+
 
 
 
 ### Contribution Roadmap
-<img width="1918" height="735" alt="image" src="https://github.com/user-attachments/assets/0acae91c-75d4-4379-ab8b-b6c16a508f48" />
+<img width="1915" height="966" alt="image" src="https://github.com/user-attachments/assets/e40ae81f-704b-441f-8d47-c13ec267d285" />
 
-<img width="1918" height="587" alt="image" src="https://github.com/user-attachments/assets/61ab37b2-e4d2-49ec-93c4-bbd61e7eb674" />
+
+<img width="1408" height="957" alt="image" src="https://github.com/user-attachments/assets/0b7ef080-db8d-4280-9acf-418b70dc9cab" />
+
 
 
 ### Maintainer Activity Visualization
-<img width="1918" height="578" alt="image" src="https://github.com/user-attachments/assets/28ca9cc6-1884-4226-b99e-847aa03e9378" />
+<img width="1918" height="576" alt="image" src="https://github.com/user-attachments/assets/e2ab2672-5893-4aa0-9185-00f056b9d4df" />
+
 
 
 
