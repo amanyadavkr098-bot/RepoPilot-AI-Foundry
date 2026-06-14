@@ -83,26 +83,13 @@ This produces **more reliable and explainable AI outputs**.
 ---
 
 ## 🏗 System Architecture
+<p align="center">
 
-```text
-GitHub Repository
-        ↓
-GitHub REST API
-        ↓
-Repository Intelligence Engine
-(Tech Stack + Metrics + Repo Analysis)
-        ↓
-Azure AI Foundry IQ
-(Vector Store + File Search)
-        ↓
-Grounded AI Insights
-        ↓
-FastAPI Backend
-        ↓
-Interactive Web Dashboard
-```
+<img width="1130" height="806" alt="image" src="https://github.com/user-attachments/assets/2130069c-576e-4ce2-b3b1-4ad4dc1d803d" />
 
----
+
+</p>
+
 
 ## 🧠 How RepoPilot AI Works
 
