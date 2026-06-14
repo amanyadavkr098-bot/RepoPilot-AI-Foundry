@@ -12,6 +12,17 @@ Built for the **Microsoft AI Skills Fest Hackathon**, RepoPilot AI uses **Azure 
 Instead of overwhelming contributors with thousands of files, issues, and unfamiliar code, RepoPilot AI transforms repositories into **actionable contributor intelligence**.
 
 ---
+## 🚀 Live Demo
+
+🌐 **Try RepoPilot AI Live:**
+https://repopilot-ai-foundry.onrender.com
+
+## 🎥 Demo Video
+
+▶️ **Watch Demo Video:**
+https://drive.google.com/file/d/10OUHgPySi6XGPcalq6hmhs91VM3WXVCh/view?usp=sharing
+
+---
 
 ## 🌍 Problem Statement
 
@@ -385,11 +396,6 @@ Learn repository structure and technologies.
 3. Azure AI Foundry analyzes repository context
 4. AI generates grounded explanations
 5. User receives contribution roadmap
-
----
-
-## 🎥 Demo Video
-*Add demo video link here*
 
 ---
 
