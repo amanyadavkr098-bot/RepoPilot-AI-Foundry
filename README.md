@@ -437,8 +437,7 @@ Built for the **Microsoft AI Skills Fest Hackathon 2026**
 ---
 
 ## 📜 License
-MIT License
-
+This project is licensed under the MIT License - see the LICENSE file for details.
 ```
 
 ``` 
